@@ -1,13 +1,21 @@
 #include "main.h"
+<<<<<<< HEAD
 #define MAXPORT 1024
 
 FILE *pFile;
 int p1, p2, p3, p4, socket1, i = 1, temp = 1, port1 = 0, port2 = 0, ip1,   ip2,   ip3,   ip4,
+=======
+
+int main (int argc, char * argv[])
+{
+int p1, p2, socket1, port1 = 0, port2 = 0, ip1,   ip2,   ip3,   ip4,
+>>>>>>> 381e72ec60236271cf0c7680b6b7dc19fa9c8020
                            ip1_1, ip1_2, ip1_3, ip1_4,
                            ip2_1, ip2_2, ip2_3, ip2_4;
 char ipaddress1[16], ipaddress2[16];
 struct sockaddr_in server1;
 
+<<<<<<< HEAD
 int main (int argc, char * argv[])
 {
 pFile = fopen ("log.txt","w");
@@ -21,6 +29,36 @@ if (argc < 2)
 if (argc > 5)
  {
  printf("Very much arguments! Only 1-2(from one to two) port(s) and address(es)\n");
+=======
+/*ip1 = (int *) malloc(sizeof(int));
+ip2 = (int *) malloc(sizeof(int));
+ip3 = (int *) malloc(sizeof(int));
+ip4 = (int *) malloc(sizeof(int));
+
+ip1_1 = (int *) malloc(sizeof(int));
+ip1_2 = (int *) malloc(sizeof(int));
+ip1_3 = (int *) malloc(sizeof(int));
+ip1_4 = (int *) malloc(sizeof(int));
+
+ip2_1 = (int *) malloc(sizeof(int));
+ip2_2 = (int *) malloc(sizeof(int));
+ip2_3 = (int *) malloc(sizeof(int));
+ip2_4 = (int *) malloc(sizeof(int));
+
+ipaddress1 = (char *) malloc(sizeof(char) * 16);
+ipaddress2 = (char *) malloc(sizeof(char) * 16);
+*/
+
+if ((socket1 = socket(AF_INET, SOCK_STREAM, 0 )) < 0)
+ {
+ printf ("ERROR socket1\n");
+ return 1;
+ }
+
+if (argc < 3)
+ {
+ printf("You most enter ipaddress(es) and/or port(s) computers for find his!\n");
+>>>>>>> 381e72ec60236271cf0c7680b6b7dc19fa9c8020
  return 1;
  }
 
@@ -29,6 +67,10 @@ memset(ipaddress2, '\0', sizeof(char) * 16);
 ip1_1 = ip1_2 = ip1_3 = ip1_4 =
 ip2_1 = ip2_2 = ip2_3 = ip2_4 = 0;
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 381e72ec60236271cf0c7680b6b7dc19fa9c8020
  while (argc > 1)
   {
   ip1 = ip2 = ip3 = ip4 = 0;
@@ -40,7 +82,10 @@ ip2_1 = ip2_2 = ip2_3 = ip2_4 = 0;
 //read ports
   if (ip4 == 0)
    {
+<<<<<<< HEAD
 //for second port
+=======
+>>>>>>> 381e72ec60236271cf0c7680b6b7dc19fa9c8020
    if (ip1 > 0)
     {
     if (port2 == 0)
@@ -48,7 +93,10 @@ ip2_1 = ip2_2 = ip2_3 = ip2_4 = 0;
       port2 = ip1;
       printf ("port2 = %d\n", port2);
      }
+<<<<<<< HEAD
 //for first port
+=======
+>>>>>>> 381e72ec60236271cf0c7680b6b7dc19fa9c8020
     else
     {
     if (port1 == 0)
@@ -95,6 +143,7 @@ ip2_1 = ip2_2 = ip2_3 = ip2_4 = 0;
   argc--;
   }
 
+<<<<<<< HEAD
 //for find when bee enter only one address
 if ((port1 == 0)&&(port2 == 0)&&(ipaddress1[0] == '\0')&&(ipaddress2[0] != '\0'))
  {
@@ -437,6 +486,9 @@ if ((ipaddress1[0] == '\0')&&(ipaddress2[0] == '\0')&&(port1 == 0)&&(port2 != 0)
 
 //for find when bee enter one port and one address
 if ((port1 == 0)&&(port2 > 0)&&(ipaddress1[0] == '\0')&&(ipaddress2[0] != '\0'))
+=======
+if ((port1 == 0)&&(ipaddress1[0] == '\0'))
+>>>>>>> 381e72ec60236271cf0c7680b6b7dc19fa9c8020
  {
  //printf("From if OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
  memset(&server1, '0', sizeof(server1));
@@ -449,16 +501,24 @@ if ((port1 == 0)&&(port2 > 0)&&(ipaddress1[0] == '\0')&&(ipaddress2[0] != '\0'))
  if (connect(socket1, (struct sockaddr *) &server1, sizeof(server1))  >= 0)
   {
   printf("connect to %d port on %s\n", port2, ipaddress2);
+<<<<<<< HEAD
   fprintf(pFile, "connect to %d port on %s\n", port2, ipaddress2);
   }
  else
   {
   printf ("ERROR connect to %d port on %s\n", port2, ipaddress2);
   fprintf(pFile, "ERROR connect to %d port on %s\n", port2, ipaddress2);
+=======
+  }
+ else
+  {
+  printf ("ERROR connect\n");
+>>>>>>> 381e72ec60236271cf0c7680b6b7dc19fa9c8020
   return 1;
   }
 
  close(socket1);
+<<<<<<< HEAD
  fclose (pFile);
  return 0;
  }
@@ -771,6 +831,12 @@ if ((ipaddress1[0] == '\0')&&(ipaddress2[0] == '\0')&&(port1 != 0)&&(port2 != 0)
 
 //for find when bee enter two ports and one address
 if ((port1 > 0)&&(port2 > 0)&&(ipaddress1[0] == '\0')&&(ipaddress2[0] != '\0'))
+=======
+ return 0;
+ }
+
+if (ipaddress1[0] == '\0')
+>>>>>>> 381e72ec60236271cf0c7680b6b7dc19fa9c8020
  {
  //printf ("port1 = %d, port2 = %d, ipaddress1 = %s, %d.%d.%d.%d, ipaddress2 = %s, %d.%d.%d.%d\n", port1, port2, ipaddress1, ip1_1, ip1_2, ip1_3, ip1_4, ipaddress2, ip2_1, ip2_2, ip2_3, ip2_4);
  if (port2 > port1)
@@ -799,12 +865,16 @@ if ((port1 > 0)&&(port2 > 0)&&(ipaddress1[0] == '\0')&&(ipaddress2[0] != '\0'))
  if (connect(socket1, (struct sockaddr *) &server1, sizeof(server1) )  >= 0)
   {
   printf("connect to %d port on %s\n", p1, ipaddress2);
+<<<<<<< HEAD
   fprintf(pFile, "connect to %d port on %s\n", p1, ipaddress2);
+=======
+>>>>>>> 381e72ec60236271cf0c7680b6b7dc19fa9c8020
   }
 
  close(socket1);
  p1++;
  }
+<<<<<<< HEAD
  fclose (pFile);
  return 0;
  }
@@ -1013,6 +1083,49 @@ if ((ipaddress1[0] != '\0')&&(ipaddress2[0] != '\0')&&(port1 > 0)&&(port2 > 0))
    }
   }
  fclose (pFile);
+=======
+ return 0;
+ }
+
+
+if ((ipaddress1[0] != '\0')&&(ipaddress2[0] != '\0')&&(port1 == 0)&&(port2 != 0))
+ {
+ //printf ("port1 = %d, port2 = %d, ipaddress1 = %s, %d.%d.%d.%d, ipaddress2 = %s, %d.%d.%d.%d\n", port1, port2, ipaddress1, ip1_1, ip1_2, ip1_3, ip1_4, ipaddress2, ip2_1, ip2_2, ip2_3, ip2_4);
+ if (ip1_4 < ip2_4)
+  {
+  p1 = ip1_4;
+  p2 = ip2_4;
+  }
+ else
+  {
+  p1 = ip2_4;
+  p2 = ip1_4;
+  }
+ while (p1 <= p2)
+ {
+ if ((socket1 = socket(AF_INET, SOCK_STREAM, 0 )) < 0)
+  {
+  printf ("ERROR socket1\n");
+  return 1;
+  }
+ 
+ memset(ipaddress2, '\0', sizeof(char) * 16);
+ sprintf(ipaddress2, "%d.%d.%d.%d", ip1_1, ip1_2, ip1_3, p1);
+
+ memset(&server1, '0', sizeof(server1));
+ server1.sin_family = AF_INET;
+ server1.sin_port = htons(port2);
+ server1.sin_addr.s_addr = inet_addr(ipaddress2);
+
+ if (connect(socket1, (struct sockaddr *) &server1, sizeof(server1) )  >= 0)
+  {
+  printf("connect to %d port on %s\n", port2, ipaddress2);
+  }
+
+ close(socket1);
+ p1++;
+ }
+>>>>>>> 381e72ec60236271cf0c7680b6b7dc19fa9c8020
  return 0;
  }
 
