@@ -1,27 +1,41 @@
-#include "main.h"
-#define MAXPORT 1024
+/*
+ Copyright (C) 2013 Bogdan Levkiv
+ contact us at <raptor02 ukr dot net>
+ 
+ This program is free software of the GNU General Public License as published
+ by the Free Software Foundation.
+*/
 
-FILE *pFile;
-int p1, p2, p3, p4, socket1, i = 1, temp = 1, port1 = 0, port2 = 0, ip1,   ip2,   ip3,   ip4,
+#include "main.h"
+
+#define MAXPORT 5555
+#define THREADS_MAX 55555
+
+pthread_t thread1[THREADS_MAX];
+struct pthread_arg arg[THREADS_MAX];
+int socket1, fd1, result, i = 1, j = 0, id, temp = 1, port1 = 0, port2 = 0, port_or_address = 0,
+                           ip11,  ip12,  ip13,  ip14,
+                           ip21,  ip22,  ip23,  ip24,
                            ip1_1, ip1_2, ip1_3, ip1_4,
                            ip2_1, ip2_2, ip2_3, ip2_4;
-char ipaddress1[16], ipaddress2[16];
-struct sockaddr_in server1;
+char ipaddress1[16]={0}, ipaddress2[16]={0};
+struct sockaddr_in server2;
 
 int main (int argc, char * argv[])
 {
-pFile = fopen ("log.txt","w");
+ struct sockaddr_in server1;
+ //fd1 = open ("log.txt", O_WRONLY|O_CREAT, 0640);
 
 if (argc < 2)
  {
- printf("You most enter ipaddress(es) up to two and/or port(s) of computers up to two for find his or these ranges!\n");
- return 1;
+  fprintf(stderr, "You most enter ipaddress(es) up to two and/or port(s) of computers up to two for find his or these ranges!\n");
+  return 1;
  }
 
 if (argc > 5)
  {
- printf("Very much arguments! Only 1-2(from one to two) port(s) and address(es)\n");
- return 1;
+  fprintf(stderr, "Very much arguments! Only 1-2(from one to two) port(s) and address(es)\n");
+  return 1;
  }
 
 memset(ipaddress1, '\0', sizeof(char) * 16);
@@ -31,101 +45,88 @@ ip2_1 = ip2_2 = ip2_3 = ip2_4 = 0;
 
  while (argc > 1)
   {
-  ip1 = ip2 = ip3 = ip4 = 0;
-  addr_to_int(argv[argc - 1], &ip1, &ip2, &ip3, &ip4);
-  addr_to_int(argv[argc - 1], &ip1, &ip2, &ip3, &ip4);
-  printf("argv[%d] = %s\n",(argc - 1),argv[argc - 1]);
-  printf("ip1 = %d, ip2 = %d, ip3 = %d, ip4= %d\n", ip1, ip2, ip3, ip4);
+   ip21 = ip22 = ip23 = ip24 = 0;
+   port_or_address = addr_to_int(argv[argc - 1], &ip11, &ip12, &ip13, &ip14);
 
 //read ports
-  if (ip4 == 0)
-   {
+  if (port_or_address == 0) //for 0 if port; 1 if address
+  {
 //for second port
-   if (ip1 > 0)
+   if (ip11 > 0)
     {
     if (port2 == 0)
      {
-      port2 = ip1;
-      printf ("port2 = %d\n", port2);
+      port2 = ip11;
+      //printf ("port2 = %d\n", port2);
      }
 //for first port
     else
     {
     if (port1 == 0)
      {
-      port1 = ip1;
-      printf ("port1 = %d\n", port1);
+      port1 = ip11;
+      //printf ("port1 = %d\n", port1);
      }
     }
     }
    }
 
 //read addreses
-  if (ip4 > 0)
+  if (port_or_address == 1)
    {
 //for second address
-   printf("ip1_4 = %d, ip2_4 = %d\n", ip1_4, ip2_4);
     if (ip2_4 == 0)
      {
-     ip2_1 = ip1;
-     ip2_2 = ip2;
-     ip2_3 = ip3;
-     ip2_4 = ip4;
+     ip2_1 = ip11;
+     ip2_2 = ip12;
+     ip2_3 = ip13;
+     ip2_4 = ip14;
      memset(ipaddress2, '\0', sizeof(char) * 16);
      memcpy(ipaddress2, argv[argc - 1], strlen(argv[argc -1]));
-     printf("ip2_4 = %d\n", ip2_4);
      }
 //for first address
     else
     {
     if (ip1_4 == 0)
      {
-     ip1_1 = ip1;
-     ip1_2 = ip2;
-     ip1_3 = ip3;
-     ip1_4 = ip4;
+     ip1_1 = ip11;
+     ip1_2 = ip12;
+     ip1_3 = ip13;
+     ip1_4 = ip14;
      memset(ipaddress1, '\0', sizeof(char) * 16);
      memcpy(ipaddress1, argv[argc - 1], strlen(argv[argc -1]));
-     printf("ip1_4 = %d\n", ip1_4);
      }
     }
    }
 
-  printf("argc = %d\n", argc);
   argc--;
   }
 
 //for find when bee enter only one address
 if ((port1 == 0)&&(port2 == 0)&&(ipaddress1[0] == '\0')&&(ipaddress2[0] != '\0'))
  {
- printf("for find when bee enter only one address\n");
- printf ("port1 = %d, port2 = %d, ipaddress1 = %s, ip1_1-4 = %d.%d.%d.%d, ipaddress2 = %s, ip2_1-4 = %d.%d.%d.%d\n", port1, port2, ipaddress1, ip1_1, ip1_2, ip1_3, ip1_4, ipaddress2, ip2_1, ip2_2, ip2_3, ip2_4);
+ fprintf(stderr, "for find when bee enter only one address\n");
 
- i = 1;
- while (i <= MAXPORT)
+ while (port2 < MAXPORT)
   {
-  if ((socket1 = socket(AF_INET, SOCK_STREAM, 0 )) < 0)
-   {
-   printf ("ERROR socket1\n");
-   return 1;
-   }
-
-  memset(&server1, '0', sizeof(server1));
-  server1.sin_family = AF_INET;
-  server1.sin_port = htons(i);
-  server1.sin_addr.s_addr = inet_addr(ipaddress2);
-
-  if (connect(socket1, (struct sockaddr *) &server1, sizeof(server1)) >= 0)
-   {
-   printf("connect to %d port on %s\n", i, ipaddress2);
-   fprintf(pFile, "connect to %d port on %s\n", i, ipaddress2);
-   }
-
-  close(socket1);
-  //printf("ip: %s	port: %d\n", ipaddress2, i);
-  i++;
+  arg[j].addr = ipaddress2;
+  arg[j].port = port2;
+  if (j > 300)
+  pthread_join(thread1[j-300], NULL);
+  result = pthread_create(&thread1[j], NULL, &child, &arg[j]);
+  if (result)
+  fprintf(stderr, "ERROR thread %s:%d\n", arg[j].addr, arg[j].port);
+  port2++;
+  j++;
+  if (j >= THREADS_MAX)
+  j = 0;
   }
- fclose (pFile);
+  /*while (j < THREADS_MAX)
+  {
+   pthread_join(thread1[j], NULL);
+   j++;
+  }*/
+ 
  return 0;
  }
 
@@ -133,202 +134,194 @@ if ((port1 == 0)&&(port2 == 0)&&(ipaddress1[0] == '\0')&&(ipaddress2[0] != '\0')
 if ((ipaddress1[0] != '\0')&&(ipaddress2[0] != '\0')&&(port1 == 0)&&(port2 == 0))
  {
  printf("for find when bee enter two addreses\n");
- //printf ("port1 = %d, port2 = %d, ipaddress1 = %s, %d.%d.%d.%d, ipaddress2 = %s, %d.%d.%d.%d\n", port1, port2, ipaddress1, ip1_1, ip1_2, ip1_3, ip1_4, ipaddress2, ip2_1, ip2_2, ip2_3, ip2_4);
  if (ip1_1 < ip2_1)
   {
-  p1 = ip1_1;
-  ip1 = ip2_1;
-  p2 = ip1_2;
-  ip2 = ip2_2;
-  p3 = ip1_3;
-  ip3 = ip2_3;
-  p4 = ip1_4;
-  ip4 = ip2_4;
+  ip11 = ip1_1;
+  ip21 = ip2_1;
+  ip12 = ip1_2;
+  ip22 = ip2_2;
+  ip13 = ip1_3;
+  ip23 = ip2_3;
+  ip14 = ip1_4;
+  ip24 = ip2_4;
   }
  if (ip1_1 > ip2_1)
   {
-  p1 = ip2_1;
-  ip1 = ip1_1;
-  p2 = ip2_2;
-  ip2 = ip1_2;
-  p3 = ip2_3;
-  ip3 = ip1_3;
-  p4 = ip2_4;
-  ip4 = ip1_4;
+  ip11 = ip2_1;
+  ip21 = ip1_1;
+  ip12 = ip2_2;
+  ip22 = ip1_2;
+  ip13 = ip2_3;
+  ip23 = ip1_3;
+  ip14 = ip2_4;
+  ip24 = ip1_4;
   }
  if (ip1_1 == ip2_1)
   {
   if (ip1_2 < ip2_2)
    {
-   p1 = ip1_1;
-   ip1 = ip2_1;
-   p2 = ip1_2;
-   ip2 = ip2_2;
-   p3 = ip1_3;
-   ip3 = ip2_3;
-   p4 = ip1_4;
-   ip4 = ip2_4;
+   ip11 = ip1_1;
+   ip21 = ip2_1;
+   ip12 = ip1_2;
+   ip22 = ip2_2;
+   ip13 = ip1_3;
+   ip23 = ip2_3;
+   ip14 = ip1_4;
+   ip24 = ip2_4;
    }
   if (ip1_2 > ip2_2)
    {
-   p1 = ip2_1;
-   ip1 = ip1_1;
-   p2 = ip2_2;
-   ip2 = ip1_2;
-   p3 = ip2_3;
-   ip3 = ip1_3;
-   p4 = ip2_4;
-   ip4 = ip1_4;
+   ip11 = ip2_1;
+   ip21 = ip1_1;
+   ip12 = ip2_2;
+   ip22 = ip1_2;
+   ip13 = ip2_3;
+   ip23 = ip1_3;
+   ip14 = ip2_4;
+   ip24 = ip1_4;
    }
   if (ip1_2 == ip2_2)
    {
    if (ip1_3 < ip2_3)
     {
-    p1 = ip1_1;
-    ip1 = ip2_1;
-    p2 = ip1_2;
-    ip2 = ip2_2;
-    p3 = ip1_3;
-    ip3 = ip2_3;
-    p4 = ip1_4;
-    ip4 = ip2_4;
+    ip11 = ip1_1;
+    ip21 = ip2_1;
+    ip12 = ip1_2;
+    ip22 = ip2_2;
+    ip13 = ip1_3;
+    ip23 = ip2_3;
+    ip14 = ip1_4;
+    ip24 = ip2_4;
     }
    if (ip1_3 > ip2_3)
     {
-    p1 = ip2_1;
-    ip1 = ip1_1;
-    p2 = ip2_2;
-    ip2 = ip1_2;
-    p3 = ip2_3;
-    ip3 = ip1_3;
-    p4 = ip2_4;
-    ip4 = ip1_4;
+    ip11 = ip2_1;
+    ip21 = ip1_1;
+    ip12 = ip2_2;
+    ip22 = ip1_2;
+    ip13 = ip2_3;
+    ip23 = ip1_3;
+    ip14 = ip2_4;
+    ip24 = ip1_4;
     }
    if (ip1_3 == ip2_3)
     {
     if (ip1_4 < ip2_4)
      {
-     p1 = ip1_1;
-     ip1 = ip2_1;
-     p2 = ip1_2;
-     ip2 = ip2_2;
-     p3 = ip1_3;
-     ip3 = ip2_3;
-     p4 = ip1_4;
-     ip4 = ip2_4;
+     ip11 = ip1_1;
+     ip21 = ip2_1;
+     ip12 = ip1_2;
+     ip22 = ip2_2;
+     ip13 = ip1_3;
+     ip23 = ip2_3;
+     ip14 = ip1_4;
+     ip24 = ip2_4;
      }
     if (ip1_4 > ip2_4)
      {
-     p1 = ip2_1;
-     ip1 = ip1_1;
-     p2 = ip2_2;
-     ip2 = ip1_2;
-     p3 = ip2_3;
-     ip3 = ip1_3;
-     p4 = ip2_4;
-     ip4 = ip1_4;
+     ip11 = ip2_1;
+     ip21 = ip1_1;
+     ip12 = ip2_2;
+     ip22 = ip1_2;
+     ip13 = ip2_3;
+     ip23 = ip1_3;
+     ip14 = ip2_4;
+     ip24 = ip1_4;
      }
     if (ip1_4 == ip2_4)
      {
-     p1 = ip1 = ip1_1;
-     p2 = ip2 = ip1_2;
-     p3 = ip3 = ip1_3;
-     p4 = ip4 = ip1_4;
+     ip11 = ip21 = ip1_1;
+     ip12 = ip22 = ip1_2;
+     ip13 = ip23 = ip1_3;
+     ip14 = ip24 = ip1_4;
      }
     }
    }
   }
   
- while (p1 != (ip1 + 1))
+ while (ip11 <= ip21)
   {
-  while (!((p2 == (ip2 + 1))&(p1 == ip1)))
+   while ((ip12 <= ip22)||(ip11 <= ip21))
     {
-    while (!((p3 == (ip3 + 1))&(p2 == ip2)))
+    while ((ip13 <= ip23)||(ip12 <= ip22)||(ip11 <= ip21))
      {
-     while (!((p4 == (ip4 + 1))&(p3 == ip3)))
+     while ((ip14 <= ip24)||(ip13 <= ip23)||(ip12 <= ip22)||(ip11 <= ip21))
       {
-      i = 1;
-      while (i <= MAXPORT)
+      port2 = 1;
+      while (port2 < MAXPORT)
        {
-       if ((socket1 = socket(AF_INET, SOCK_STREAM, 0 )) < 0)
-        {
-        printf ("ERROR socket1\n");
+       arg[j].addr = (char *) malloc (sizeof(char) * 16);
+       memset(arg[j].addr, '\0', sizeof(char) * 16);
+       sprintf(arg[j].addr, "%d.%d.%d.%d", ip11, ip12, ip13, ip14);
+       
+       arg[j].port = port2;
+
+       if (!pthread_equal(pthread_self(), thread1[j]))
+        pthread_join(thread1[j], NULL);
+       if (j > 300)
+       pthread_join(thread1[j - 300], NULL);
+       result = pthread_create(&thread1[j], NULL, child, &arg[j]);
+       if (result)
+       {
+        fprintf(stderr, "ERROR thread %s:%d\n", arg[j].addr, arg[j].port);
         return 1;
-        }
-       memset(ipaddress2, '\0', sizeof(char) * 16);
-       sprintf(ipaddress2, "%d.%d.%d.%d", p1, p2, p3, p4);
-
-       memset(&server1, '0', sizeof(server1));
-       server1.sin_family = AF_INET;
-       server1.sin_port = htons(i);
-       server1.sin_addr.s_addr = inet_addr(ipaddress2);
-
-       if (connect(socket1, (struct sockaddr *) &server1, sizeof(server1) )  >= 0)
-        {
-        printf("connect to %d port on %s\n", i, ipaddress2);
-        fprintf(pFile, "connect to %d port on %s\n", i, ipaddress2);
-        }
-
-       close(socket1);
-       //printf("ip: %d.%d.%d.%d port: %d\n", p1, p2, p3, p4, i);
-       //fprintf(pFile, "ip: %d.%d.%d.%d port: %d\n", p1, p2, p3, p4, i);
-       i++;
        }
-      printf("Whill bee from 4\n");
-      if ((p4 == ip4)&(p3 == ip3)&(p2 == ip2)&(p1 == ip1))
+       free(arg[j].addr);
+       port2++;
+       j++;
+       
+       if (j >= THREADS_MAX)
+        j = 0;
+      //fprintf(stderr, "Whill bee from %d\n", j);
+      }
+      //printf("Whill bee from 4\n");
+      if ((ip14 == ip24)&&(ip13 == ip23)&&(ip12 == ip22)&&(ip11 == ip21))
        {
        break;
        }
-      p4++;
-      if (p4 == 255)
+      ip14++;
+      if (ip14 == 255)
        {
-       p4 = 1;
+       ip14 = 1;
        break;
        }
       }
-     //printf("p3 = %d\n", p3);
-     //fprintf(pFile, "p3 = %d\n", p3);
-     printf("Whill bee from 3\n");
-     if ((p3 == ip3)&(p2 == ip2)&(p1 == ip1))
+     //printf("Whill bee from 3\n");
+     if ((ip13 == ip23)&&(ip12 == ip22)&&(ip11 == ip21))
       {
       break;
       }
-     p3++;
-     if (p3 == 255)
+     ip13++;
+     if (ip13 == 255)
       {
-      p3 = 0;
+      ip13 = 0;
       break;
       }
      }
-    //printf("p2 = %d\n", p2);
-    //fprintf(pFile, "p2 = %d\n", p2);
-    printf("Whill bee from 2\n");
-    if ((p2 == ip2)&(p1 == ip1))
+    //printf("Whill bee from 2\n");
+    if ((ip12 == ip22)&&(ip11 == ip21))
       {
       break;
       }
-    p2++;
-    if (p2 == 255)
+    ip12++;
+    if (ip12 == 255)
      {
-     p2 = 0;
+     ip12 = 0;
      break;
      }
     }
-  //printf("p1 = %d\n", p1);
-  //fprintf(pFile, "p1 = %d\n", p1);
-  printf("Whill bee from 1\n");
-  if (p1 == ip1)
+  //printf("Whill bee from 1\n");
+  if (ip11 == ip21)
    {
    break;
    }
-  p1++;
-  if (p1 == 255)
+  ip11++;
+  if (ip11 == 255)
    {
-   p1 = 0;
+   ip11 = 0;
    break;
    }
   }
- fclose (pFile);
  return 0;
  }
 
@@ -337,100 +330,91 @@ if ((ipaddress1[0] != '\0')&&(ipaddress2[0] != '\0')&&(port1 == 0)&&(port2 == 0)
 if ((ipaddress1[0] == '\0')&&(ipaddress2[0] == '\0')&&(port1 == 0)&&(port2 != 0))
  {
  printf("for find when bee enter one port\n");
- //printf ("port1 = %d, port2 = %d, ipaddress1 = %s, %d.%d.%d.%d, ipaddress2 = %s, %d.%d.%d.%d\n", port1, port2, ipaddress1, ip1_1, ip1_2, ip1_3, ip1_4, ipaddress2, ip2_1, ip2_2, ip2_3, ip2_4);
  
- p1 = 1;	ip1 = 255;
- p2 = 0;	ip2 = 255;
- p3 = 0;	ip3 = 255;
- p4 = 1;	ip4 = 255;
+ /*ip11 = 1;	ip21 = 254;
+ ip12 = 0;	ip22 = 254;
+ ip13 = 0;	ip23 = 254;
+ ip14 = 1;	ip24 = 254;*/
+ 
+ ip11 = 1;	ip21 = 254;
+ ip12 = 0;	ip22 = 254;
+ ip13 = 0;	ip23 = 254;
+ ip14 = 1;	ip24 = 254;
 
- while (p1 != (ip1 + 1))
+ while (ip11 <= ip21)
   {
-  while (!((p2 == (ip2 + 1))&(p1 == ip1)))
+  while ((ip12 <= ip22)||(ip11 <= ip21))
     {
-    while (!((p3 == (ip3 + 1))&(p2 == ip2)))
+    while ((ip13 <= ip23)||(ip12 <= ip22)||(ip11 <= ip21))
      {
-     while (!((p4 == (ip4 + 1))&(p3 == ip3)))
+     while ((ip14 <= ip24)||(ip13 <= ip23)||(ip12 <= ip22)||(ip11 <= ip21))
       {
-      i = port2;
-       if ((socket1 = socket(AF_INET, SOCK_STREAM, 0 )) < 0)
-        {
-        printf ("ERROR socket1\n");
-        return 1;
-        }
-       memset(ipaddress2, '\0', sizeof(char) * 16);
-       sprintf(ipaddress2, "%d.%d.%d.%d", p1, p2, p3, p4);
-
-       memset(&server1, '0', sizeof(server1));
-       server1.sin_family = AF_INET;
-       server1.sin_port = htons(i);
-       server1.sin_addr.s_addr = inet_addr(ipaddress2);
-
-       if (connect(socket1, (struct sockaddr *) &server1, sizeof(server1) )  >= 0)
-        {
-        printf("connect to %d port on %s\n", i, ipaddress2);
-        fprintf(pFile, "connect to %d port on %s\n", i, ipaddress2);
-        }
-
-       close(socket1);
-       printf("ip: %d.%d.%d.%d port: %d\n", p1, p2, p3, p4, i);
-       //fprintf(pFile, "ip: %d.%d.%d.%d port: %d\n", p1, p2, p3, p4, i);
-       i++;
-      printf("Whill bee from 4\n");
-      if ((p4 == ip4)&(p3 == ip3)&(p2 == ip2)&(p1 == ip1))
+      arg[j].addr = (char *) malloc (sizeof(char) * 16);
+      memset(arg[j].addr, '\0', sizeof(char) * 16);
+      sprintf(arg[j].addr, "%d.%d.%d.%d", ip11, ip12, ip13, ip14);
+      
+      arg[j].port = port2;
+      
+      if (!pthread_equal(pthread_self(), thread1[j]))
+       pthread_join(thread1[j], NULL);
+      if (j > 300)
+      pthread_join(thread1[j - 300], NULL);
+      result = pthread_create(&thread1[j], NULL, child, &arg[j]);
+      if (result)
+      fprintf(stderr, "ERROR thread %s:%d\n", arg[j].addr, arg[j].port);
+      free(arg[j].addr);
+      j++;
+      if (j >= THREADS_MAX)
+       j = 0;
+      
+      //printf("Whill bee from 4\n");
+      if ((ip14 == ip24)&&(ip13 == ip23)&&(ip12 == ip22)&&(ip11 == ip21))
        {
-       break;
+        break;
        }
-      p4++;
-      if (p4 == 255)
+       ip14++;
+      if (ip14 == 255)
        {
-       p4 = 1;
+       ip14 = 1;
        break;
        }
       }
-     //printf("p3 = %d\n", p3);
-     //fprintf(pFile, "p3 = %d\n", p3);
-     printf("Whill bee from 3\n");
-     if ((p3 == ip3)&(p2 == ip2)&(p1 == ip1))
+     //printf("Whill bee from 3\n");
+     if ((ip13 == ip23)&&(ip12 == ip22)&&(ip11 == ip21))
       {
       break;
       }
-     p3++;
-     if (p3 == 255)
+     ip13++;
+     if (ip13 == 255)
       {
-      p3 = 0;
+      ip13 = 0;
       break;
       }
      }
-    //printf("p2 = %d\n", p2);
-    //fprintf(pFile, "p2 = %d\n", p2);
-    printf("Whill bee from 2\n");
-    if ((p2 == ip2)&(p1 == ip1))
+    //printf("Whill bee from 2\n");
+    if ((ip12 == ip22)&&(ip11 == ip21))
       {
       break;
       }
-    p2++;
-    if (p2 == 255)
+    ip12++;
+    if (ip12 == 255)
      {
-     p2 = 0;
+     ip12 = 0;
      break;
      }
     }
-  //printf("p1 = %d\n", p1);
-  //fprintf(pFile, "p1 = %d\n", p1);
   printf("Whill bee from 1\n");
-  if (p1 == ip1)
+  if (ip11 == ip21)
    {
    break;
    }
-  p1++;
-  if (p1 == 255)
+  ip11++;
+  if (ip11 == 255)
    {
-   p1 = 0;
+   ip11 = 0;
    break;
    }
   }
- fclose (pFile);
  return 0;
  }
 
@@ -438,333 +422,310 @@ if ((ipaddress1[0] == '\0')&&(ipaddress2[0] == '\0')&&(port1 == 0)&&(port2 != 0)
 //for find when bee enter one port and one address
 if ((port1 == 0)&&(port2 > 0)&&(ipaddress1[0] == '\0')&&(ipaddress2[0] != '\0'))
  {
- //printf("From if OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
- memset(&server1, '0', sizeof(server1));
+ fprintf(stderr, "for find when bee enter one port and one address\n");
+ 
+ if ((socket1 = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+ {
+  fprintf(stderr, "ERROR create socket1\n");
+ }
+ 
+ memset(&server1, '\0', sizeof(server1));
  server1.sin_family = AF_INET;
  server1.sin_port = htons(port2);
  server1.sin_addr.s_addr = inet_addr(ipaddress2);
 
- printf ("port1 = %d, port2 = %d, ipaddress1 = %s, %d.%d.%d.%d, ipaddress2 = %s, %d.%d.%d.%d\n", port1, port2, ipaddress1, ip1_1, ip1_2, ip1_3, ip1_4, ipaddress2, ip2_1, ip2_2, ip2_3, ip2_4);
-
  if (connect(socket1, (struct sockaddr *) &server1, sizeof(server1))  >= 0)
   {
   printf("connect to %d port on %s\n", port2, ipaddress2);
-  fprintf(pFile, "connect to %d port on %s\n", port2, ipaddress2);
   }
  else
   {
   printf ("ERROR connect to %d port on %s\n", port2, ipaddress2);
-  fprintf(pFile, "ERROR connect to %d port on %s\n", port2, ipaddress2);
   return 1;
   }
 
  close(socket1);
- fclose (pFile);
  return 0;
  }
 
 //for find when bee enter one port and two addreses
 if ((ipaddress1[0] != '\0')&&(ipaddress2[0] != '\0')&&(port1 == 0)&&(port2 > 0))
  {
- //printf ("port1 = %d, port2 = %d, ipaddress1 = %s, %d.%d.%d.%d, ipaddress2 = %s, %d.%d.%d.%d\n", port1, port2, ipaddress1, ip1_1, ip1_2, ip1_3, ip1_4, ipaddress2, ip2_1, ip2_2, ip2_3, ip2_4);
+ fprintf(stderr, "for find when bee enter one port and two addreses\n");
  if (ip1_1 < ip2_1)
   {
-  p1 = ip1_1;
-  ip1 = ip2_1;
-  p2 = ip1_2;
-  ip2 = ip2_2;
-  p3 = ip1_3;
-  ip3 = ip2_3;
-  p4 = ip1_4;
-  ip4 = ip2_4;
+  ip11 = ip1_1;
+  ip21 = ip2_1;
+  ip12 = ip1_2;
+  ip22 = ip2_2;
+  ip13 = ip1_3;
+  ip23 = ip2_3;
+  ip14 = ip1_4;
+  ip24 = ip2_4;
   }
  if (ip1_1 > ip2_1)
   {
-  p1 = ip2_1;
-  ip1 = ip1_1;
-  p2 = ip2_2;
-  ip2 = ip1_2;
-  p3 = ip2_3;
-  ip3 = ip1_3;
-  p4 = ip2_4;
-  ip4 = ip1_4;
+  ip11 = ip2_1;
+  ip21 = ip1_1;
+  ip12 = ip2_2;
+  ip22 = ip1_2;
+  ip13 = ip2_3;
+  ip23 = ip1_3;
+  ip14 = ip2_4;
+  ip24 = ip1_4;
   }
  if (ip1_1 == ip2_1)
   {
   if (ip1_2 < ip2_2)
    {
-   p1 = ip1_1;
-   ip1 = ip2_1;
-   p2 = ip1_2;
-   ip2 = ip2_2;
-   p3 = ip1_3;
-   ip3 = ip2_3;
-   p4 = ip1_4;
-   ip4 = ip2_4;
+   ip11 = ip1_1;
+   ip21 = ip2_1;
+   ip12 = ip1_2;
+   ip22 = ip2_2;
+   ip13 = ip1_3;
+   ip23 = ip2_3;
+   ip14 = ip1_4;
+   ip24 = ip2_4;
    }
   if (ip1_2 > ip2_2)
    {
-   p1 = ip2_1;
-   ip1 = ip1_1;
-   p2 = ip2_2;
-   ip2 = ip1_2;
-   p3 = ip2_3;
-   ip3 = ip1_3;
-   p4 = ip2_4;
-   ip4 = ip1_4;
+   ip11 = ip2_1;
+   ip21 = ip1_1;
+   ip12 = ip2_2;
+   ip22 = ip1_2;
+   ip13 = ip2_3;
+   ip23 = ip1_3;
+   ip14 = ip2_4;
+   ip24 = ip1_4;
    }
   if (ip1_2 == ip2_2)
    {
    if (ip1_3 < ip2_3)
     {
-    p1 = ip1_1;
-    ip1 = ip2_1;
-    p2 = ip1_2;
-    ip2 = ip2_2;
-    p3 = ip1_3;
-    ip3 = ip2_3;
-    p4 = ip1_4;
-    ip4 = ip2_4;
+    ip11 = ip1_1;
+    ip21 = ip2_1;
+    ip12 = ip1_2;
+    ip22 = ip2_2;
+    ip13 = ip1_3;
+    ip23 = ip2_3;
+    ip14 = ip1_4;
+    ip24 = ip2_4;
     }
    if (ip1_3 > ip2_3)
     {
-    p1 = ip2_1;
-    ip1 = ip1_1;
-    p2 = ip2_2;
-    ip2 = ip1_2;
-    p3 = ip2_3;
-    ip3 = ip1_3;
-    p4 = ip2_4;
-    ip4 = ip1_4;
+    ip11 = ip2_1;
+    ip21 = ip1_1;
+    ip12 = ip2_2;
+    ip22 = ip1_2;
+    ip13 = ip2_3;
+    ip23 = ip1_3;
+    ip14 = ip2_4;
+    ip24 = ip1_4;
     }
    if (ip1_3 == ip2_3)
     {
     if (ip1_4 < ip2_4)
      {
-     p1 = ip1_1;
-     ip1 = ip2_1;
-     p2 = ip1_2;
-     ip2 = ip2_2;
-     p3 = ip1_3;
-     ip3 = ip2_3;
-     p4 = ip1_4;
-     ip4 = ip2_4;
+     ip11 = ip1_1;
+     ip21 = ip2_1;
+     ip12 = ip1_2;
+     ip22 = ip2_2;
+     ip13 = ip1_3;
+     ip23 = ip2_3;
+     ip14 = ip1_4;
+     ip24 = ip2_4;
      }
     if (ip1_4 > ip2_4)
      {
-     p1 = ip2_1;
-     ip1 = ip1_1;
-     p2 = ip2_2;
-     ip2 = ip1_2;
-     p3 = ip2_3;
-     ip3 = ip1_3;
-     p4 = ip2_4;
-     ip4 = ip1_4;
+     ip11 = ip2_1;
+     ip21 = ip1_1;
+     ip12 = ip2_2;
+     ip22 = ip1_2;
+     ip13 = ip2_3;
+     ip23 = ip1_3;
+     ip14 = ip2_4;
+     ip24 = ip1_4;
      }
     if (ip1_4 == ip2_4)
      {
-     p1 = ip1 = ip1_1;
-     p2 = ip2 = ip1_2;
-     p3 = ip3 = ip1_3;
-     p4 = ip4 = ip1_4;
+     ip11 = ip21 = ip1_1;
+     ip12 = ip22 = ip1_2;
+     ip13 = ip23 = ip1_3;
+     ip14 = ip24 = ip1_4;
      }
     }
    }
   }
   
- while (p1 != (ip1 + 1))
+ while (ip11 <= ip21)
   {
-  while (!((p2 == (ip2 + 1))&(p1 == ip1)))
+  while ((ip12 <= ip22)||(ip11 <= ip21))
     {
-    while (!((p3 == (ip3 + 1))&(p2 == ip2)))
+    while ((ip13 <= ip23)||(ip12 <= ip22)||(ip11 <= ip21))
      {
-     while (!((p4 == (ip4 + 1))&(p3 == ip3)))
+     while ((ip14 <= ip24)||(ip13 <= ip23)||(ip12 <= ip22)||(ip11 <= ip21))
       {
-      if ((socket1 = socket(AF_INET, SOCK_STREAM, 0 )) < 0)
-       {
-       printf ("ERROR socket1\n");
-       return 1;
-       }
- 
-      memset(ipaddress2, '\0', sizeof(char) * 16);
-      sprintf(ipaddress2, "%d.%d.%d.%d", p1, p2, p3, p4);
+      arg[j].addr = (char *) malloc (sizeof(char) * 16);
+      memset(arg[j].addr, '\0', sizeof(char) * 16);
+      sprintf(arg[j].addr, "%d.%d.%d.%d", ip11, ip12, ip13, ip14);
 
-      memset(&server1, '0', sizeof(server1));
-      server1.sin_family = AF_INET;
-      server1.sin_port = htons(port2);
-      server1.sin_addr.s_addr = inet_addr(ipaddress2);
-
-      if (connect(socket1, (struct sockaddr *) &server1, sizeof(server1) )  >= 0)
-       {
-       printf("connect to %d port on %s\n", port2, ipaddress2);
-       fprintf(pFile, "connect to %d port on %s\n", port2, ipaddress2);
-       }
-
-      close(socket1);
-      //printf("ip: %d.%d.%d.%d\n", p1, p2, p3, p4);
-      //fprintf(pFile, "ip: %d.%d.%d.%d\n", p1, p2, p3, p4);
-      if ((p4 == ip4)&(p3 == ip3)&(p2 == ip2)&(p1 == ip1))
+      arg[j].port = port2;
+      
+      if (!pthread_equal(pthread_self(), thread1[j]))
+       pthread_join(thread1[j], NULL);
+      if (j > 300)
+      pthread_join(thread1[j - 300], NULL);
+      result = pthread_create(&thread1[j], NULL, child, &arg[j]);
+      if (result)
+      fprintf(stderr, "ERROR thread %s:%d\n", arg[j].addr, arg[j].port);
+      free(arg[j].addr);
+      j++;
+      if (j >= THREADS_MAX)
+       j = 0;
+      
+      if ((ip14 == ip24)&&(ip13 == ip23)&&(ip12 == ip22)&&(ip11 == ip21))
        {
        break;
        }
-      p4++;
-      if (p4 == 255)
+      ip14++;
+      if (ip14 == 255)
        {
-       p4 = 1;
+       ip14 = 1;
        break;
        }
       }
-     //printf("p3 = %d\n", p3);
-     //fprintf(pFile, "p3 = %d\n", p3);
-     if ((p3 == ip3)&(p2 == ip2)&(p1 == ip1))
+     if ((ip13 == ip23)&&(ip12 == ip22)&&(ip11 == ip21))
       {
       break;
       }
-     p3++;
-     if (p3 == 255)
+     ip13++;
+     if (ip13 == 255)
       {
-      p3 = 0;
+      ip13 = 0;
       break;
       }
      }
-    //printf("p2 = %d\n", p2);
-    //fprintf(pFile, "p2 = %d\n", p2);
-    if ((p2 == ip2)&(p1 == ip1))
+    if ((ip12 == ip22)&&(ip11 == ip21))
       {
       break;
       }
-    p2++;
-    if (p2 == 255)
+    ip12++;
+    if (ip12 == 255)
      {
-     p2 = 0;
+     ip12 = 0;
      break;
      }
     }
-  //printf("p1 = %d\n", p1);
-  //fprintf(pFile, "p1 = %d\n", p1);
-  if (p1 == ip1)
+  if (ip11 == ip21)
    {
    break;
    }
-  p1++;
-  if (p1 == 255)
+  ip11++;
+  if (ip11 == 255)
    {
-   p1 = 0;
+   ip11 = 0;
    break;
    }
   }
- fclose (pFile);
  return 0;
  }
 
 //for find when bee enter two ports
 if ((ipaddress1[0] == '\0')&&(ipaddress2[0] == '\0')&&(port1 != 0)&&(port2 != 0))
  {
- printf("for find when bee enter two ports\n");
- //printf ("port1 = %d, port2 = %d, ipaddress1 = %s, %d.%d.%d.%d, ipaddress2 = %s, %d.%d.%d.%d\n", port1, port2, ipaddress1, ip1_1, ip1_2, ip1_3, ip1_4, ipaddress2, ip2_1, ip2_2, ip2_3, ip2_4);
+ fprintf(stderr, "for find when bee enter two ports\n");
  
- p1 = 1;	ip1 = 255;
- p2 = 0;	ip2 = 255;
- p3 = 0;	ip3 = 255;
- p4 = 1;	ip4 = 255;
+ ip11 = 1;	ip21 = 254;
+ ip12 = 0;	ip22 = 254;
+ ip13 = 0;	ip23 = 254;
+ ip14 = 1;	ip24 = 254;
 
  temp = port2;
  if(port1 < port2)
   {
   temp = port1;
   port1 = port2;
+  port2 = temp;
   }
 
- while (p1 != (ip1 + 1))
+ while (ip11 <= ip21)
   {
-  while (!((p2 == (ip2 + 1))&(p1 == ip1)))
+  while ((ip12 <= ip22)||(ip11 <= ip21))
     {
-    while (!((p3 == (ip3 + 1))&(p2 == ip2)))
+    while ((ip13 <= ip23)||(ip12 <= ip22)||(ip11 <= ip21))
      {
-     while (!((p4 == (ip4 + 1))&(p3 == ip3)))
+     while ((ip14 <= ip24)||(ip13 <= ip23)||(ip12 <= ip22)||(ip11 <= ip21))
       {
-      i = temp;
-      while (i <= port1)
+      port2 = temp;
+      while (port2 <= port1)
        {
-       if ((socket1 = socket(AF_INET, SOCK_STREAM, 0 )) < 0)
-        {
-        printf ("ERROR socket1\n");
-        return 1;
-        }
-       memset(ipaddress2, '\0', sizeof(char) * 16);
-       sprintf(ipaddress2, "%d.%d.%d.%d", p1, p2, p3, p4);
-
-       memset(&server1, '0', sizeof(server1));
-       server1.sin_family = AF_INET;
-       server1.sin_port = htons(i);
-       server1.sin_addr.s_addr = inet_addr(ipaddress2);
-
-       if (connect(socket1, (struct sockaddr *) &server1, sizeof(server1) )  >= 0)
-        {
-        printf("connect to %d port on %s\n", i, ipaddress2);
-        fprintf(pFile, "connect to %d port on %s\n", i, ipaddress2);
-        }
-
-       close(socket1);
-       printf("ip: %d.%d.%d.%d port: %d\n", p1, p2, p3, p4, i);
-       //fprintf(pFile, "ip: %d.%d.%d.%d port: %d\n", p1, p2, p3, p4, i);
-       i++;
+        arg[j].addr = (char *) malloc (sizeof(char) * 16);
+        memset(arg[j].addr, '\0', sizeof(char) * 16);
+        sprintf(arg[j].addr, "%d.%d.%d.%d", ip11, ip12, ip13, ip14);
+        
+        arg[j].port = port2;
+        
+        if (!pthread_equal(pthread_self(), thread1[j]))
+         pthread_join(thread1[j], NULL);
+        if (j > 300)
+        pthread_join(thread1[j - 300], NULL);
+        result = pthread_create(&thread1[j], NULL, child, &arg[j]);
+        if (result)
+        fprintf(stderr, "ERROR thread %d %s:%d\n", j, arg[j].addr, arg[j].port);
+        free(arg[j].addr);
+        port2++;
+        j++;
+        if (j >= THREADS_MAX)
+         j = 0;
        }
       //printf("Whill bee from 4\n");
-      if ((p4 == ip4)&(p3 == ip3)&(p2 == ip2)&(p1 == ip1))
+      if ((ip14 == ip24)&&(ip13 == ip23)&&(ip12 == ip22)&&(ip11 == ip21))
        {
        break;
        }
-      p4++;
-      if (p4 == 255)
+      ip14++;
+      if (ip14 == 255)
        {
-       p4 = 1;
+       ip14 = 1;
        break;
        }
       }
-     //printf("p3 = %d\n", p3);
-     //fprintf(pFile, "p3 = %d\n", p3);
      //printf("Whill bee from 3\n");
-     if ((p3 == ip3)&(p2 == ip2)&(p1 == ip1))
+     if ((ip13 == ip23)&&(ip12 == ip22)&&(ip11 == ip21))
       {
       break;
       }
-     p3++;
-     if (p3 == 255)
+     ip13++;
+     if (ip13 == 255)
       {
-      p3 = 0;
+      ip13 = 0;
       break;
       }
      }
-    //printf("p2 = %d\n", p2);
-    //fprintf(pFile, "p2 = %d\n", p2);
     //printf("Whill bee from 2\n");
-    if ((p2 == ip2)&(p1 == ip1))
+    if ((ip12 == ip22)&&(ip11 == ip21))
       {
       break;
       }
-    p2++;
-    if (p2 == 255)
+    ip12++;
+    if (ip12 == 255)
      {
-     p2 = 0;
+     ip12 = 0;
      break;
      }
     }
-  //printf("p1 = %d\n", p1);
-  //fprintf(pFile, "p1 = %d\n", p1);
   //printf("Whill bee from 1\n");
-  if (p1 == ip1)
+  if (ip11 == ip21)
    {
    break;
    }
-  p1++;
-  if (p1 == 255)
+  ip11++;
+  if (ip11 == 255)
    {
-   p1 = 0;
+   ip11 = 0;
    break;
    }
   }
- fclose (pFile);
  return 0;
  }
 
@@ -772,148 +733,144 @@ if ((ipaddress1[0] == '\0')&&(ipaddress2[0] == '\0')&&(port1 != 0)&&(port2 != 0)
 //for find when bee enter two ports and one address
 if ((port1 > 0)&&(port2 > 0)&&(ipaddress1[0] == '\0')&&(ipaddress2[0] != '\0'))
  {
- //printf ("port1 = %d, port2 = %d, ipaddress1 = %s, %d.%d.%d.%d, ipaddress2 = %s, %d.%d.%d.%d\n", port1, port2, ipaddress1, ip1_1, ip1_2, ip1_3, ip1_4, ipaddress2, ip2_1, ip2_2, ip2_3, ip2_4);
+ fprintf(stderr, "for find when bee enter two ports and one address\n");
  if (port2 > port1)
   {
-  p1 = port1;
-  p2 = port2;
+  ip11 = port1;
+  ip12 = port2;
   }
  else
   {
-  p1 = port2;
-  p2 = port1;
-  }
- while (p1 <= p2)
- {
- if ((socket1 = socket(AF_INET, SOCK_STREAM, 0 )) < 0)
-  {
-  printf ("ERROR socket1\n");
-  return 1;
+  ip11 = port2;
+  ip12 = port1;
   }
  
- memset(&server1, '0', sizeof(server1));
- server1.sin_family = AF_INET;
- server1.sin_port = htons(p1);
- server1.sin_addr.s_addr = inet_addr(ipaddress2);
-
- if (connect(socket1, (struct sockaddr *) &server1, sizeof(server1) )  >= 0)
-  {
-  printf("connect to %d port on %s\n", p1, ipaddress2);
-  fprintf(pFile, "connect to %d port on %s\n", p1, ipaddress2);
-  }
-
- close(socket1);
- p1++;
+ j = 0;
+ while (ip11 <= ip12)
+ {
+  arg[j].addr = ipaddress2;
+  arg[j].port = ip11;
+  
+  if (!pthread_equal(pthread_self(), thread1[j]))
+   pthread_join(thread1[j], NULL);
+  if (j > 300)
+  pthread_join(thread1[j - 300], NULL);
+  result = pthread_create(&thread1[j], NULL, child, &arg[j]);
+  if (result)
+  fprintf(stderr, "ERROR thread %s:%d\n", arg[j].addr, arg[j].port);
+  j++;
+  ip11++;
+  if (j >= THREADS_MAX)
+   j = 0;
  }
- fclose (pFile);
  return 0;
  }
 
 //for find when bee enter two ports and two addreses
 if ((ipaddress1[0] != '\0')&&(ipaddress2[0] != '\0')&&(port1 > 0)&&(port2 > 0))
  {
- printf("for find when bee enter two ports and two addreses\n");
- //printf ("port1 = %d, port2 = %d, ipaddress1 = %s, %d.%d.%d.%d, ipaddress2 = %s, %d.%d.%d.%d\n", port1, port2, ipaddress1, ip1_1, ip1_2, ip1_3, ip1_4, ipaddress2, ip2_1, ip2_2, ip2_3, ip2_4);
+ fprintf(stderr, "for find when bee enter two ports and two addreses\n");
+ 
  if (ip1_1 < ip2_1)
   {
-  p1 = ip1_1;
-  ip1 = ip2_1;
-  p2 = ip1_2;
-  ip2 = ip2_2;
-  p3 = ip1_3;
-  ip3 = ip2_3;
-  p4 = ip1_4;
-  ip4 = ip2_4;
+  ip11 = ip1_1;
+  ip21 = ip2_1;
+  ip12 = ip1_2;
+  ip22 = ip2_2;
+  ip13 = ip1_3;
+  ip23 = ip2_3;
+  ip14 = ip1_4;
+  ip24 = ip2_4;
   }
  if (ip1_1 > ip2_1)
   {
-  p1 = ip2_1;
-  ip1 = ip1_1;
-  p2 = ip2_2;
-  ip2 = ip1_2;
-  p3 = ip2_3;
-  ip3 = ip1_3;
-  p4 = ip2_4;
-  ip4 = ip1_4;
+  ip11 = ip2_1;
+  ip21 = ip1_1;
+  ip12 = ip2_2;
+  ip22 = ip1_2;
+  ip13 = ip2_3;
+  ip23 = ip1_3;
+  ip14 = ip2_4;
+  ip24 = ip1_4;
   }
  if (ip1_1 == ip2_1)
   {
   if (ip1_2 < ip2_2)
    {
-   p1 = ip1_1;
-   ip1 = ip2_1;
-   p2 = ip1_2;
-   ip2 = ip2_2;
-   p3 = ip1_3;
-   ip3 = ip2_3;
-   p4 = ip1_4;
-   ip4 = ip2_4;
+   ip11 = ip1_1;
+   ip21 = ip2_1;
+   ip12 = ip1_2;
+   ip22 = ip2_2;
+   ip13 = ip1_3;
+   ip23 = ip2_3;
+   ip14 = ip1_4;
+   ip24 = ip2_4;
    }
   if (ip1_2 > ip2_2)
    {
-   p1 = ip2_1;
-   ip1 = ip1_1;
-   p2 = ip2_2;
-   ip2 = ip1_2;
-   p3 = ip2_3;
-   ip3 = ip1_3;
-   p4 = ip2_4;
-   ip4 = ip1_4;
+   ip11 = ip2_1;
+   ip21 = ip1_1;
+   ip12 = ip2_2;
+   ip22 = ip1_2;
+   ip13 = ip2_3;
+   ip23 = ip1_3;
+   ip14 = ip2_4;
+   ip24 = ip1_4;
    }
   if (ip1_2 == ip2_2)
    {
    if (ip1_3 < ip2_3)
     {
-    p1 = ip1_1;
-    ip1 = ip2_1;
-    p2 = ip1_2;
-    ip2 = ip2_2;
-    p3 = ip1_3;
-    ip3 = ip2_3;
-    p4 = ip1_4;
-    ip4 = ip2_4;
+    ip11 = ip1_1;
+    ip21 = ip2_1;
+    ip12 = ip1_2;
+    ip22 = ip2_2;
+    ip13 = ip1_3;
+    ip23 = ip2_3;
+    ip14 = ip1_4;
+    ip24 = ip2_4;
     }
    if (ip1_3 > ip2_3)
     {
-    p1 = ip2_1;
-    ip1 = ip1_1;
-    p2 = ip2_2;
-    ip2 = ip1_2;
-    p3 = ip2_3;
-    ip3 = ip1_3;
-    p4 = ip2_4;
-    ip4 = ip1_4;
+    ip11 = ip2_1;
+    ip21 = ip1_1;
+    ip12 = ip2_2;
+    ip22 = ip1_2;
+    ip13 = ip2_3;
+    ip23 = ip1_3;
+    ip14 = ip2_4;
+    ip24 = ip1_4;
     }
    if (ip1_3 == ip2_3)
     {
     if (ip1_4 < ip2_4)
      {
-     p1 = ip1_1;
-     ip1 = ip2_1;
-     p2 = ip1_2;
-     ip2 = ip2_2;
-     p3 = ip1_3;
-     ip3 = ip2_3;
-     p4 = ip1_4;
-     ip4 = ip2_4;
+     ip11 = ip1_1;
+     ip21 = ip2_1;
+     ip12 = ip1_2;
+     ip22 = ip2_2;
+     ip13 = ip1_3;
+     ip23 = ip2_3;
+     ip14 = ip1_4;
+     ip24 = ip2_4;
      }
     if (ip1_4 > ip2_4)
      {
-     p1 = ip2_1;
-     ip1 = ip1_1;
-     p2 = ip2_2;
-     ip2 = ip1_2;
-     p3 = ip2_3;
-     ip3 = ip1_3;
-     p4 = ip2_4;
-     ip4 = ip1_4;
+     ip11 = ip2_1;
+     ip21 = ip1_1;
+     ip12 = ip2_2;
+     ip22 = ip1_2;
+     ip13 = ip2_3;
+     ip23 = ip1_3;
+     ip14 = ip2_4;
+     ip24 = ip1_4;
      }
     if (ip1_4 == ip2_4)
      {
-     p1 = ip1 = ip1_1;
-     p2 = ip2 = ip1_2;
-     p3 = ip3 = ip1_3;
-     p4 = ip4 = ip1_4;
+     ip11 = ip21 = ip1_1;
+     ip12 = ip22 = ip1_2;
+     ip13 = ip23 = ip1_3;
+     ip14 = ip24 = ip1_4;
      }
     }
    }
@@ -924,95 +881,86 @@ if ((ipaddress1[0] != '\0')&&(ipaddress2[0] != '\0')&&(port1 > 0)&&(port2 > 0))
  {
  temp = port1;
  port1 = port2;
+ port2 = temp;
  }
  
- while (p1 != (ip1 + 1))
+ while (ip11 <= ip21)
   {
-  while (!((p2 == (ip2 + 1))&(p1 == ip1)))
+  while ((ip12 <= ip22)||(ip11 <= ip21))
     {
-    while (!((p3 == (ip3 + 1))&(p2 == ip2)))
+    while ((ip13 <= ip23)||(ip12 <= ip22)||(ip11 <= ip21))
      {
-     while (!((p4 == (ip4 + 1))&(p3 == ip3)))
+     while ((ip14 <= ip24)||(ip13 <= ip23)||(ip12 <= ip22)||(ip11 <= ip21))
       {
-      i = temp;
+      i = port2;
       while (i <= port1)
       {
-      if ((socket1 = socket(AF_INET, SOCK_STREAM, 0 )) < 0)
-       {
-       printf ("ERROR socket1\n");
-       return 1;
-       }
- 
-      memset(ipaddress2, '\0', sizeof(char) * 16);
-      sprintf(ipaddress2, "%d.%d.%d.%d", p1, p2, p3, p4);
-
-      memset(&server1, '0', sizeof(server1));
-      server1.sin_family = AF_INET;
-      server1.sin_port = htons(i);
-      server1.sin_addr.s_addr = inet_addr(ipaddress2);
-
-      if (connect(socket1, (struct sockaddr *) &server1, sizeof(server1) )  >= 0)
-       {
-       printf("connect to %d port on %s\n", i, ipaddress2);
-       fprintf(pFile, "connect to %d port on %s\n", i, ipaddress2);
-       }
-
-      close(socket1);
-      i++;
+       arg[j].addr = (char *) malloc(sizeof(char) * 16);
+       memset(arg[j].addr, '\0', sizeof(char) * 16);
+       sprintf(arg[j].addr, "%d.%d.%d.%d", ip11, ip12, ip13, ip14);
+       
+       arg[j].port = i;
+       
+       if (!pthread_equal(pthread_self(), thread1[j]))
+        pthread_join(thread1[j], NULL);
+       if (j > 300)
+       pthread_join(thread1[j - 300], NULL);
+       result = pthread_create(&thread1[j], NULL, child, &arg[j]);
+       if (result)
+        {
+        fprintf(stderr, "ERROR create thread %d %s:%d\n", j, arg[j].addr, arg[j].port);
+        return 1;
+        }
+       free(arg[j].addr);
+       j++;
+       i++;
+       if (j >= THREADS_MAX)
+        j = 0;
       }
-     //printf("ip: %d.%d.%d.%d\n", p1, p2, p3, p4);
-     //fprintf(pFile, "ip: %d.%d.%d.%d\n", p1, p2, p3, p4);
-      if ((p4 == ip4)&(p3 == ip3)&(p2 == ip2)&(p1 == ip1))
+      if ((ip14 == ip24)&&(ip13 == ip23)&&(ip12 == ip22)&&(ip11 == ip21))
        {
        break;
        }
-      p4++;
-      if (p4 == 255)
+      ip14++;
+      if (ip14 == 255)
        {
-       p4 = 1;
+       ip14 = 1;
        break;
        }
       }
-     //printf("p3 = %d\n", p3);
-     //fprintf(pFile, "p3 = %d\n", p3);
-     if ((p3 == ip3)&(p2 == ip2)&(p1 == ip1))
+     if ((ip13 == ip23)&&(ip12 == ip22)&&(ip11 == ip21))
       {
       break;
       }
-     p3++;
-     if (p3 == 255)
+     ip13++;
+     if (ip13 == 255)
       {
-      p3 = 0;
+      ip13 = 0;
       break;
       }
      }
-    //printf("p2 = %d\n", p2);
-    //fprintf(pFile, "p2 = %d\n", p2);
-    if ((p2 == ip2)&(p1 == ip1))
+    if ((ip12 == ip22)&&(ip11 == ip21))
       {
       break;
       }
-    p2++;
-    if (p2 == 255)
+    ip12++;
+    if (ip12 == 255)
      {
-     p2 = 0;
+     ip12 = 0;
      break;
      }
     }
-  //printf("p1 = %d\n", p1);
-  //fprintf(pFile, "p1 = %d\n", p1);
-  if (p1 == ip1)
+  if (ip11 == ip21)
    {
    break;
    }
-  p1++;
-  if (p1 == 255)
+  ip11++;
+  if (ip11 == 255)
    {
-   p1 = 0;
+   ip11 = 0;
    break;
    }
   }
- fclose (pFile);
  return 0;
  }
 
