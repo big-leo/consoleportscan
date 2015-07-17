@@ -1,14 +1,30 @@
-cpscan: main.o child.o addr_to_int.o
-	gcc -Wall -g -pthread -o cpscan main.o child.o addr_to_int.o
+CC=gcc
+FLAGS=-Wall -g
 
-main.o: main.c main.h child.c child.h
-	gcc -Wall -g -c main.c
+SOURCEDIR=src
+SOURCEDIR2=src/util
+BUILDDIR=build
 
-child.o: child.c child.h
-	gcc -Wall -g -c child.c
+EXECUTABLE=target/cpscan
+SOURCES=$(wildcard $(SOURCEDIR)/*.c)
+OBJECTS=$(patsubst $(SOURCEDIR)/%.c,$(BUILDDIR)/%.o,$(SOURCES))
 
-addr_to_int.o: lib/addr_to_int.c lib/addr_to_int.h
-	gcc -Wall -g -c lib/addr_to_int.c
+SOURCES2=$(wildcard $(SOURCEDIR2)/*.c)
+OBJECTS2=$(patsubst $(SOURCEDIR2)/%.c,$(BUILDDIR)/%.o,$(SOURCES2))
+
+build: create_dirs $(EXECUTABLE)
+
+create_dirs:
+	mkdir build target
+
+$(EXECUTABLE): $(OBJECTS) $(OBJECTS2)
+	$(CC) $(FLAGS) -pthread $^ -o $@
+
+$(OBJECTS): $(BUILDDIR)/%.o: $(SOURCEDIR)/%.c
+	$(CC) $(FLAGS) -c -o $@ $<
+
+$(OBJECTS2): $(BUILDDIR)/%.o: $(SOURCEDIR2)/%.c
+	$(CC) $(FLAGS) -c -o $@ $<
 
 clean:
-	rm *.o cpscan
+	rm $(BUILDDIR)/*.o $(EXECUTABLE)
