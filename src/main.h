@@ -4,7 +4,7 @@
  
  This program is free software of the GNU General Public License as published
  by the Free Software Foundation.
-*/
+ */
 
 #ifndef MAIN_H
 #define MAIN_H
@@ -24,10 +24,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-struct pthread_arg
-{
- char * addr;
- int port;
+struct pthread_arg {
+    char * addr;
+    int port;
 };
 
 #endif

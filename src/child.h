@@ -4,7 +4,7 @@
  
  This program is free software of the GNU General Public License as published
  by the Free Software Foundation.
-*/
+ */
 
 #ifndef CHILD_H
 #define CHILD_H
