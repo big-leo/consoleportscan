@@ -14,7 +14,6 @@ char addr_in[16], temp[4];
 
 void set_ip();
 
-/*int addr_to_int(char *all_ip, int *ip1, int *ip2, int *ip3, int *ip4) {*/
 int addr_to_int(struct IpAddr * ipAddr) {
 
     memset(temp, ' ', strlen(temp));
