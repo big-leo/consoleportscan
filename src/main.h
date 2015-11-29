@@ -1,7 +1,6 @@
 /*
  Copyright (C) 2013 Bogdan Levkiv
  contact us at <raptor02 at ukr dot net>
- 
  This program is free software of the GNU General Public License as published
  by the Free Software Foundation.
  */
@@ -9,6 +8,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+#include "util/structs.h"
 #include "util/addr_to_int.h"
 #include "child.h"
 

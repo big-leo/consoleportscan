@@ -1,7 +1,7 @@
 /*
  Copyright (C) 2013 Bogdan Levkiv
  contact us at <raptor02 ukr dot net>
- 
+
  This program is free software of the GNU General Public License as published
  by the Free Software Foundation.
  */
@@ -13,8 +13,9 @@
 
 pthread_t thread1[THREADS_MAX];
 struct pthread_arg arg[THREADS_MAX];
-int socket1, fd1, result, i = 1, j = 0, id, temp = 1, port1 = 0, port2 = 0, port_or_address = 0,
-        ip11, ip12, ip13, ip14,
+struct IpAddr * ipAddr;
+int socket1, fd1, result, i = 1, j = 0, id, temp = 1, port1 = 0, port2 = 0, port_or_address = 0;
+int     ip11, ip12, ip13, ip14,
         ip21, ip22, ip23, ip24,
         ip1_1, ip1_2, ip1_3, ip1_4,
         ip2_1, ip2_2, ip2_3, ip2_4;
@@ -41,8 +42,15 @@ int main(int argc, char * argv[]) {
             ip2_1 = ip2_2 = ip2_3 = ip2_4 = 0;
 
     while (argc > 1) {
+        ipAddr = malloc(sizeof(struct IpAddr));
         ip21 = ip22 = ip23 = ip24 = 0;
-        port_or_address = addr_to_int(argv[argc - 1], &ip11, &ip12, &ip13, &ip14);
+        strcpy(ipAddr->strAddr, argv[argc - 1]);
+        port_or_address = addr_to_int( ipAddr );
+        ip11 = ipAddr->ip1;
+        ip12 = ipAddr->ip2;
+        ip13 = ipAddr->ip3;
+        ip14 = ipAddr->ip4;
+        free(ipAddr);
 
         //read ports
         if (port_or_address == 0) //for 0 if port; 1 if address
